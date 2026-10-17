@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اپ حسابداری</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- هدر -->
+    <header class="header">
+      <h1>اپ حسابداری</h1>
+      <div class="header-actions">
+        <button class="btn btn-outline" onclick="exportData()">خروجی داده</button>
+        <button class="btn btn-outline" onclick="importData()">ورود داده</button>
+      </div>
+    </header>
+
+    <!-- تب‌های بالا -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="dashboard">داشبورد</button>
+      <button class="tab" data-tab="persons">اشخاص</button>
+      <button class="tab" data-tab="goods">کالاها</button>
+      <button class="tab" data-tab="purchases">خریدها</button>
+      <button class="tab" data-tab="invoice">فاکتور</button>
+      <button class="tab" data-tab="reports">گزارش‌ها</button>
+    </nav>
+
+    <!-- محتوای اصلی -->
+    <main class="content">
+      <!-- داشبورد -->
+      <section id="dashboard" class="tab-content active">
+        <div class="cards">
+          <div class="card">
+            <h3>تعداد اشخاص</h3>
+            <p class="number" id="stat-persons">0</p>
+          </div>
+          <div class="card">
+            <h3>تعداد کالاها</h3>
+            <p class="number" id="stat-goods">0</p>
+          </div>
+          <div class="card">
+            <h3>تعداد خریدها</h3>
+            <p class="number" id="stat-purchases">0</p>
+          </div>
+          <div class="card">
+            <h3>جمع مبلغ خریدها</h3>
+            <p class="number" id="stat-total">۰ ریال</p>
+          </div>
+        </div>
+        <div class="recent">
+          <h2>آخرین خریدها</h2>
+          <div id="recent-purchases" class="table-wrapper"></div>
+        </div>
+      </section>
+
+      <!-- اشخاص -->
+      <section id="persons" class="tab-content">
+        <div class="section-header">
+          <h2>مدیریت اشخاص</h2>
+          <button class="btn btn-primary" onclick="openPersonModal()">+ افزودن شخص</button>
+        </div>
+        <div class="search-box">
+          <input type="text" id="person-search" placeholder="جستجوی شخص (الفبایی)..." oninput="filterPersons()">
+        </div>
+        <div id="persons-list" class="table-wrapper"></div>
+      </section>
+
+      <!-- کالاها -->
+      <section id="goods" class="tab-content">
+        <div class="section-header">
+          <h2>مدیریت کالاها</h2>
+          <button class="btn btn-primary" onclick="openGoodModal()">+ افزودن کالا</button>
+        </div>
+        <div class="search-box">
+          <input type="text" id="good-search" placeholder="جستجوی کالا (الفبایی)..." oninput="filterGoods()">
+        </div>
+        <div id="goods-list" class="table-wrapper"></div>
+      </section>
+
+      <!-- خریدها -->
+      <section id="purchases" class="tab-content">
+        <div class="section-header">
+          <h2>لیست خریدها</h2>
+        </div>
+        <div class="search-box">
+          <input type="text" id="purchase-search" placeholder="جستجو در خریدها..." oninput="filterPurchases()">
+        </div>
+        <div id="purchases-list" class="table-wrapper"></div>
+      </section>
+
+      <!-- فاکتور (تب جدید) -->
+      <section id="invoice" class="tab-content">
+        <div class="section-header">
+          <h2>صدور فاکتور خرید</h2>
+        </div>
+
+        <div class="invoice-form">
+          <!-- انتخاب شخص با جستجوی الفبایی -->
+          <div class="form-group">
+            <label>شخص / تأمین‌کننده</label>
+            <div class="searchable-select" id="person-select-wrapper">
+              <input type="text" id="invoice-person-search" placeholder="جستجوی شخص بر اساس حروف الفبا..." 
+                     onfocus="showPersonDropdown()" oninput="filterPersonDropdown()" autocomplete="off">
+              <div class="dropdown-list" id="person-dropdown"></div>
+              <input type="hidden" id="invoice-person-id">
+            </div>
+          </div>
+
+          <!-- تاریخ -->
+          <div class="form-group">
+            <label>تاریخ فاکتور</label>
+            <input type="date" id="invoice-date" class="input">
+          </div>
+
+          <!-- شماره فاکتور -->
+          <div class="form-group">
+            <label>شماره فاکتور</label>
+            <input type="text" id="invoice-number" class="input" placeholder="شماره فاکتور (اختیاری)">
+          </div>
+
+          <!-- افزودن کالا -->
+          <div class="form-group">
+            <label>افزودن کالا به فاکتور</label>
+            <div class="searchable-select" id="good-select-wrapper">
+              <input type="text" id="invoice-good-search" placeholder="جستجوی کالا بر اساس حروف الفبا..." 
+                     onfocus="showGoodDropdown()" oninput="filterGoodDropdown()" autocomplete="off">
+              <div class="dropdown-list" id="good-dropdown"></div>
+            </div>
+          </div>
+
+          <!-- جدول اقلام فاکتور -->
+          <div class="invoice-items">
+            <h3>اقلام فاکتور</h3>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>کالا</th>
+                  <th>تعداد</th>
+                  <th>قیمت واحد (ریال)</th>
+                  <th>جمع</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="invoice-items-body">
+                <!-- اقلام اینجا اضافه می‌شوند -->
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" class="text-left"><strong>جمع کل:</strong></td>
+                  <td id="invoice-total" class="total-cell">۰</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveInvoice()">ثبت فاکتور</button>
+            <button class="btn btn-outline" onclick="clearInvoice()">پاک کردن</button>
+          </div>
+        </div>
+
+        <!-- فاکتورهای شخص انتخاب‌شده -->
+        <div class="invoice-history" id="person-invoices-section" style="display:none;">
+          <h3>فاکتورهای این شخص</h3>
+          <div id="person-invoices-list" class="table-wrapper"></div>
+        </div>
+
+        <!-- لیست همه فاکتورها -->
+        <div class="invoice-history">
+          <h3>همه فاکتورهای ثبت‌شده</h3>
+          <div id="invoices-list" class="table-wrapper"></div>
+        </div>
+      </section>
+
+      <!-- گزارش‌ها -->
+      <section id="reports" class="tab-content">
+        <div class="section-header">
+          <h2>گزارش‌ها</h2>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <h3>خرید بر اساس شخص</h3>
+            <div id="report-by-person"></div>
+          </div>
+          <div class="card">
+            <h3>خرید بر اساس کالا</h3>
+            <div id="report-by-good"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- مودال شخص -->
+  <div class="modal" id="person-modal">
+    <div class="modal-content">
+      <h3 id="person-modal-title">افزودن شخص</h3>
+      <input type="hidden" id="person-id">
+      <div class="form-group">
+        <label>نام</label>
+        <input type="text" id="person-name" class="input" placeholder="نام شخص">
+      </div>
+      <div class="form-group">
+        <label>تلفن</label>
+        <input type="text" id="person-phone" class="input" placeholder="شماره تلفن">
+      </div>
+      <div class="form-group">
+        <label>آدرس</label>
+        <textarea id="person-address" class="input" placeholder="آدرس"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="savePerson()">ذخیره</button>
+        <button class="btn btn-outline" onclick="closePersonModal()">انصراف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال کالا -->
+  <div class="modal" id="good-modal">
+    <div class="modal-content">
+      <h3 id="good-modal-title">افزودن کالا</h3>
+      <input type="hidden" id="good-id">
+      <div class="form-group">
+        <label>نام کالا</label>
+        <input type="text" id="good-name" class="input" placeholder="نام کالا">
+      </div>
+      <div class="form-group">
+        <label>واحد</label>
+        <input type="text" id="good-unit" class="input" placeholder="مثلاً عدد، کیلوگرم">
+      </div>
+      <div class="form-group">
+        <label>قیمت پیش‌فرض (ریال)</label>
+        <input type="number" id="good-price" class="input" placeholder="قیمت">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveGood()">ذخیره</button>
+        <button class="btn btn-outline" onclick="closeGoodModal()">انصراف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال ویرایش فاکتور -->
+  <div class="modal" id="edit-invoice-modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3>ویرایش فاکتور</h3>
+        <button class="btn-close" onclick="closeEditInvoiceModal()">&times;</button>
+      </div>
+      <input type="hidden" id="edit-invoice-id">
+
+      <div class="form-group">
+        <label>شخص / تأمین‌کننده</label>
+        <div class="searchable-select" id="edit-person-select-wrapper">
+          <input type="text" id="edit-invoice-person-search" placeholder="جستجوی شخص..." 
+                 onfocus="showEditPersonDropdown()" oninput="filterEditPersonDropdown()" autocomplete="off">
+          <div class="dropdown-list" id="edit-person-dropdown"></div>
+          <input type="hidden" id="edit-invoice-person-id">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>تاریخ فاکتور</label>
+          <input type="date" id="edit-invoice-date" class="input">
+        </div>
+        <div class="form-group">
+          <label>شماره فاکتور</label>
+          <input type="text" id="edit-invoice-number" class="input" placeholder="شماره فاکتور">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>افزودن کالا</label>
+        <div class="searchable-select" id="edit-good-select-wrapper">
+          <input type="text" id="edit-invoice-good-search" placeholder="جستجوی کالا بر اساس حروف الفبا..." 
+                 onfocus="showEditGoodDropdown()" oninput="filterEditGoodDropdown()" autocomplete="off">
+          <div class="dropdown-list" id="edit-good-dropdown"></div>
+        </div>
+      </div>
+
+      <div class="invoice-items">
+        <h3>اقلام فاکتور</h3>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>کالا</th>
+              <th>تعداد / وزن</th>
+              <th>قیمت واحد (ریال)</th>
+              <th>جمع</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="edit-invoice-items-body"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="text-left"><strong>جمع کل:</strong></td>
+              <td id="edit-invoice-total" class="total-cell">۰</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveEditedInvoice()">ذخیره تغییرات</button>
+        <button class="btn btn-outline" onclick="closeEditInvoiceModal()">انصراف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ورودی فایل مخفی برای import -->
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+
+  <script src="app.js"></script>
+</body>
+</html>
